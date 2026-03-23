@@ -184,21 +184,20 @@ export default function ExpensesPage() {
   const totalIncome = incomes.reduce((s, e) => s + Number(e.amount), 0)
 
   return (
-    <div className="p-4 sm:p-8 max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Money Tracker</h1>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">Track income & expenses</p>
+    <div className="p-4 sm:p-8 max-w-4xl mx-auto space-y-4 sm:space-y-6 overflow-x-hidden">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Money Tracker</h1>
+          <p className="text-gray-500 dark:text-gray-400 text-xs sm:text-sm mt-0.5">Track income & expenses</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 flex-shrink-0">
           {tab === 'expenses' && (
             <Button variant="ghost" size="sm" onClick={() => { setShowCSVModal(true); setUploadStatus(null) }}>
-              <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
-              CSV
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
             </Button>
           )}
-          <Button onClick={() => tab === 'expenses' ? (resetExpForm(), setShowAddExpense(true)) : (resetIncForm(), setShowAddIncome(true))}>
-            + Add {tab === 'expenses' ? 'Expense' : 'Income'}
+          <Button size="sm" onClick={() => tab === 'expenses' ? (resetExpForm(), setShowAddExpense(true)) : (resetIncForm(), setShowAddIncome(true))}>
+            + Add
           </Button>
         </div>
       </div>
@@ -225,10 +224,10 @@ export default function ExpensesPage() {
             ))}
           </div>
 
-          <Card className="bg-gradient-to-r from-red-500 to-rose-500 border-0 text-white">
-            <p className="text-xs opacity-80 uppercase tracking-wide">Total {filter !== 'All' ? filter : ''} Spending</p>
-            <p className="text-3xl font-bold mt-1">₹{totalExpenses.toLocaleString()}</p>
-            <p className="text-xs opacity-70 mt-1">{filteredExpenses().length} transactions</p>
+          <Card className="bg-gradient-to-r from-red-500 to-rose-500 border-0 text-white !p-3 sm:!p-5">
+            <p className="text-[10px] sm:text-xs opacity-80 uppercase tracking-wide">Total {filter !== 'All' ? filter : ''} Spending</p>
+            <p className="text-2xl sm:text-3xl font-bold mt-0.5">₹{totalExpenses.toLocaleString()}</p>
+            <p className="text-[10px] sm:text-xs opacity-70 mt-0.5">{filteredExpenses().length} transactions</p>
           </Card>
 
           <div className="space-y-2">
@@ -259,10 +258,10 @@ export default function ExpensesPage() {
       {/* ====== INCOME TAB ====== */}
       {tab === 'income' && (
         <>
-          <Card className="bg-gradient-to-r from-emerald-500 to-teal-500 border-0 text-white">
-            <p className="text-xs opacity-80 uppercase tracking-wide">Total Income</p>
-            <p className="text-3xl font-bold mt-1">₹{totalIncome.toLocaleString()}</p>
-            <p className="text-xs opacity-70 mt-1">{incomes.length} entries</p>
+          <Card className="bg-gradient-to-r from-emerald-500 to-teal-500 border-0 text-white !p-3 sm:!p-5">
+            <p className="text-[10px] sm:text-xs opacity-80 uppercase tracking-wide">Total Income</p>
+            <p className="text-2xl sm:text-3xl font-bold mt-0.5">₹{totalIncome.toLocaleString()}</p>
+            <p className="text-[10px] sm:text-xs opacity-70 mt-0.5">{incomes.length} entries</p>
           </Card>
 
           <div className="space-y-2">
