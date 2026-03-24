@@ -91,6 +91,7 @@ export default function GroupsPage() {
 
     if (emails.length > 0) {
       const results: string[] = []
+      const pendingInviteLinks: string[] = []
 
       for (const email of emails) {
         // Check if user exists
@@ -101,36 +102,51 @@ export default function GroupsPage() {
           .single()
 
         if (profile) {
-          // User exists — add them directly
           await supabase.from('group_members').insert({ group_id: group.id, user_id: profile.id })
-          results.push(`${email} added`)
+          results.push(`✓ ${email} added`)
         } else {
-          // User doesn't exist — save pending invite so they auto-join on signup
           await supabase.from('pending_invites').insert({
             group_id: group.id,
             email: email,
             invited_by: user.id,
           })
-
-          // Open mailto with invite link
-          const inviteLink = `${window.location.origin}/signup?invite_group=${group.id}`
-          const subject = encodeURIComponent(`Join "${name}" on Hisaab Kitaab`)
-          const body = encodeURIComponent(
-            `Hey!\n\nYou've been invited to join the group "${name}" on Hisaab Kitaab — a free expense splitting app.\n\nSign up and join here:\n${inviteLink}\n\nSee you there!`
-          )
-          window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank')
-          results.push(`${email} — invite sent`)
+          pendingInviteLinks.push(email)
+          results.push(`⏳ ${email} — invite link ready`)
         }
       }
 
-      setInviteStatus(results.join('; '))
+      setInviteStatus(results.join('\n'))
+
+      // If there are pending invites, generate a share link
+      if (pendingInviteLinks.length > 0) {
+        const inviteLink = `${window.location.origin}/signup?invite_group=${group.id}`
+        const shareText = `Join "${name}" on Hisaab Kitaab!\n\nSign up here: ${inviteLink}`
+
+        // Try native share (works great on mobile), fall back to clipboard
+        if (navigator.share) {
+          try {
+            await navigator.share({ title: `Join ${name}`, text: shareText })
+          } catch {
+            // User cancelled share — copy to clipboard instead
+            await navigator.clipboard.writeText(inviteLink)
+          }
+        } else {
+          await navigator.clipboard.writeText(inviteLink)
+        }
+
+        setInviteStatus(results.join('\n') + '\n\n📋 Invite link copied! Share it with them.')
+      }
     }
 
-    setShowCreate(false)
-    setName('')
-    setDescription('')
-    setInviteEmails('')
-    setInviteStatus('')
+    if (!inviteEmails.trim()) {
+      // No invites — just close
+      setShowCreate(false)
+      setName('')
+      setDescription('')
+      setInviteEmails('')
+      setInviteStatus('')
+    }
+
     loadGroups()
     setLoading(false)
   }
@@ -189,14 +205,24 @@ export default function GroupsPage() {
               className="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 focus:outline-none transition-colors"
             />
             <p className="mt-1 text-xs text-gray-400">
-              Comma-separated emails. Existing users are added automatically. Others get an email invite to sign up.
+              Comma-separated emails. Existing users are added instantly. For new users, you'll get a share link to send them.
             </p>
           </div>
 
           {createError && <p className="text-sm text-red-500">{createError}</p>}
-          {inviteStatus && <p className="text-sm text-emerald-600">{inviteStatus}</p>}
+          {inviteStatus && (
+            <div className="p-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl">
+              {inviteStatus.split('\n').map((line, i) => (
+                <p key={i} className="text-sm text-emerald-700 dark:text-emerald-400">{line}</p>
+              ))}
+            </div>
+          )}
 
-          <Button type="submit" loading={loading} className="w-full">Create Group & Send Invites</Button>
+          {inviteStatus ? (
+            <Button type="button" className="w-full" onClick={() => { setShowCreate(false); setName(''); setDescription(''); setInviteEmails(''); setInviteStatus('') }}>Done</Button>
+          ) : (
+            <Button type="submit" loading={loading} className="w-full">Create Group</Button>
+          )}
         </form>
       </Modal>
     </div>

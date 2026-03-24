@@ -41,6 +41,7 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
   // Add member
   const [memberEmail, setMemberEmail] = useState('')
   const [memLoading, setMemLoading] = useState(false)
+  const [inviteCopied, setInviteCopied] = useState(false)
   const [memError, setMemError] = useState('')
 
   const load = async () => {
@@ -133,18 +134,33 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
       }
       await supabase.from('group_members').insert({ group_id: groupId, user_id: profile.id })
     } else {
-      // Save pending invite + send email
+      // Save pending invite
       await supabase.from('pending_invites').insert({
         group_id: groupId,
         email: email,
         invited_by: user!.id,
       })
+
+      // Share invite link
       const inviteLink = `${window.location.origin}/signup?invite_group=${groupId}`
-      const subject = encodeURIComponent(`Join "${group?.name}" on Hisaab Kitaab`)
-      const body = encodeURIComponent(
-        `Hey!\n\nYou've been invited to join "${group?.name}" on Hisaab Kitaab.\n\nSign up here:\n${inviteLink}\n\nSee you there!`
-      )
-      window.open(`mailto:${email}?subject=${subject}&body=${body}`, '_blank')
+      const shareText = `Join "${group?.name}" on Hisaab Kitaab!\n\nSign up here: ${inviteLink}`
+
+      if (navigator.share) {
+        try { await navigator.share({ title: `Join ${group?.name}`, text: shareText }) }
+        catch { await navigator.clipboard.writeText(inviteLink) }
+      } else {
+        await navigator.clipboard.writeText(inviteLink)
+      }
+
+      setMemError('')
+      setMemberEmail('')
+      setShowAddMember(false)
+      setMemLoading(false)
+      // Brief alert
+      setInviteCopied(true)
+      setTimeout(() => setInviteCopied(false), 3000)
+      load()
+      return
     }
 
     setShowAddMember(false)
@@ -168,6 +184,14 @@ export default function GroupDetailPage({ params }: { params: Promise<{ id: stri
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{group.name}</h1>
         {group.description && <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{group.description}</p>}
       </div>
+
+      {/* Invite copied toast */}
+      {inviteCopied && (
+        <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-xl p-3 flex items-center gap-2">
+          <span className="text-sm">📋</span>
+          <p className="text-sm text-emerald-700 dark:text-emerald-400">Invite link copied to clipboard! Share it with them via WhatsApp, text, etc.</p>
+        </div>
+      )}
 
       {/* Settlement Banner */}
       {settlements.length > 0 && (
